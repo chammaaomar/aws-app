@@ -3,8 +3,12 @@
 STACK_NAME=awsbootstrap
 REGION=us-east-1
 CLI_PROFILE=default
-AWS_ACCOUNT_ID=`aws sts get-caller-idetntiy --profile $CLI_PROFILE --query "Account" --output text`
+AWS_ACCOUNT_ID=`aws sts get-caller-identity --profile $CLI_PROFILE --query "Account" --output text`
 CODEPIPELINE_BUCKET="$STACK_NAME-$REGION-codepipeline-$AWS_ACCOUNT_ID"
+GH_ACCESS_TOKEN=$(cat ~/.github/aws-bootstrap-access-token)
+GH_OWNER=$(cat ~/.github/aws-bootstrap-owner)
+GH_REPO=$(cat ~/.github/aws-bootstrap-repo)
+GH_BRANCH=master
 
 EC2_INSTANCE_TYPE=t2.micro
 
@@ -14,7 +18,7 @@ aws cloudformation deploy \
   --region $REGION \
   --profile $CLI_PROFILE \
   --stack-name $STACK_NAME \
-  --template-profile setup.yml \
+  --template-file setup.yml \
   --no-fail-on-empty-changeset \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
@@ -31,6 +35,11 @@ aws cloudformation deploy \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
     EC2InstanceType=$EC2_INSTANCE_TYPE \
+    GitHubOwner=$GH_OWNER \
+    GitHubRepo=$GH_REPO \
+    GitHubBranch=$GH_BRANCH \
+    GitHubPersonalAccessToken=$GH_ACCESS_TOKEN \
+    CodePipelineBucket=$CODEPIPELINE_BUCKET
 
 # If the deploy succeeded, show the DNS name of the created instance
 if [ $? -eq 0 ]; then
